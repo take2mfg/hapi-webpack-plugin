@@ -29,7 +29,6 @@ function register(server, options, next) {
 
   // Create middlewares
   const webpackDevMiddleware = WebpackDevMiddleware(compiler, config.assets);
-  const webpackHotMiddleware = WebpackHotMiddleware(compiler, config.hot);
 
   // Handle webpackDevMiddleware
   server.ext('onRequest', (request, reply) => {
@@ -42,16 +41,20 @@ function register(server, options, next) {
     });
   });
 
-  // Handle webpackHotMiddleware
-  server.ext('onRequest', (request, reply) => {
-    const {req, res} = request.raw;
-    webpackHotMiddleware(req, res, error => {
-      if (error) {
-        return reply(error);
-      }
-      reply.continue();
+  if (config.enableHot) {
+    const webpackHotMiddleware = WebpackHotMiddleware(compiler, config.hot);
+
+    // Handle webpackHotMiddleware
+    server.ext('onRequest', (request, reply) => {
+      const {req, res} = request.raw;
+      webpackHotMiddleware(req, res, error => {
+        if (error) {
+          return reply(error);
+        }
+        reply.continue();
+      });
     });
-  });
+  }
 
   // Expose compiler
   server.expose({compiler});
@@ -74,4 +77,3 @@ register.attributes = {
  * Export plugin
  */
 export default register;
-
